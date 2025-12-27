@@ -103,29 +103,212 @@ ibani-nllb-model/
 
 ## 🔧 API Endpoints
 
-### POST `/translate`
-Translate text between Ibani and English.
+The FastAPI server provides the following endpoints:
 
-**Request:**
-```json
-{
-  "text": "Hello world",
-  "source_lang": "eng",
-  "target_lang": "iba"
-}
+### 📍 **GET /** - Root Endpoint
+Get API information and available endpoints.
+
+```bash
+curl http://localhost:8080/
 ```
 
 **Response:**
 ```json
 {
-  "translation": "Ndewo ụwa",
-  "source_lang": "eng",
-  "target_lang": "iba"
+  "message": "Ibani-English Translation API",
+  "version": "1.0.0",
+  "endpoints": {
+    "translate": "/translate",
+    "health": "/health",
+    "docs": "/docs"
+  }
 }
 ```
 
-### GET `/health`
-Check API health status.
+---
+
+### 📍 **GET /health** - Health Check
+Check if the model is loaded and API is healthy.
+
+```bash
+curl http://localhost:8080/health
+```
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "model_loaded": true,
+  "model_path": "models/ibani-nllb",
+  "device": "cuda"
+}
+```
+
+---
+
+### 📍 **POST /translate** - Single Translation
+Translate text between Ibani and English.
+
+**Request:**
+```bash
+curl -X POST "http://localhost:8080/translate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hello, how are you?",
+    "source_lang": "eng",
+    "target_lang": "iba",
+    "max_length": 200,
+    "num_beams": 5
+  }'
+```
+
+**Request Body:**
+```json
+{
+  "text": "Hello, how are you?",
+  "source_lang": "eng",
+  "target_lang": "iba",
+  "max_length": 200,
+  "num_beams": 5
+}
+```
+
+**Parameters:**
+- `text` (required): Text to translate
+- `source_lang` (required): Source language (`eng` or `iba`)
+- `target_lang` (required): Target language (`eng` or `iba`)
+- `max_length` (optional): Maximum translation length (default: 200)
+- `num_beams` (optional): Number of beams for beam search (default: 5)
+
+**Response:**
+```json
+{
+  "translation": "Translated text here",
+  "source_lang": "eng",
+  "target_lang": "iba",
+  "model": "models/ibani-nllb"
+}
+```
+
+---
+
+### 📍 **POST /batch-translate** - Batch Translation
+Translate multiple texts in a single request.
+
+**Request:**
+```bash
+curl -X POST "http://localhost:8080/batch-translate" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "text": "Hello",
+      "source_lang": "eng",
+      "target_lang": "iba"
+    },
+    {
+      "text": "Thank you",
+      "source_lang": "eng",
+      "target_lang": "iba"
+    }
+  ]'
+```
+
+**Request Body:**
+```json
+[
+  {
+    "text": "Hello",
+    "source_lang": "eng",
+    "target_lang": "iba"
+  },
+  {
+    "text": "Thank you",
+    "source_lang": "eng",
+    "target_lang": "iba"
+  }
+]
+```
+
+**Response:**
+```json
+[
+  {
+    "translation": "First translation",
+    "source_lang": "eng",
+    "target_lang": "iba",
+    "model": "models/ibani-nllb"
+  },
+  {
+    "translation": "Second translation",
+    "source_lang": "eng",
+    "target_lang": "iba",
+    "model": "models/ibani-nllb"
+  }
+]
+```
+
+---
+
+### 📚 **Interactive API Documentation**
+
+Once the server is running, access interactive documentation:
+
+- **Swagger UI**: http://localhost:8080/docs
+- **ReDoc**: http://localhost:8080/redoc
+
+These provide a web interface to test all endpoints directly in your browser!
+
+---
+
+### 🎯 **Language Codes**
+
+- **English**: `eng`
+- **Ibani**: `iba`
+
+---
+
+### 💡 **Python Client Example**
+
+```python
+import requests
+
+# Single translation
+response = requests.post(
+    "http://localhost:8080/translate",
+    json={
+        "text": "Hello, how are you?",
+        "source_lang": "eng",
+        "target_lang": "iba"
+    }
+)
+result = response.json()
+print(f"Translation: {result['translation']}")
+
+# Batch translation
+response = requests.post(
+    "http://localhost:8080/batch-translate",
+    json=[
+        {"text": "Hello", "source_lang": "eng", "target_lang": "iba"},
+        {"text": "Thank you", "source_lang": "eng", "target_lang": "iba"}
+    ]
+)
+results = response.json()
+for item in results:
+    print(f"Translation: {item['translation']}")
+```
+
+---
+
+### ⚙️ **Environment Configuration**
+
+Create a `.env` file to configure the API:
+
+```bash
+MODEL_PATH=models/ibani-nllb
+BASE_MODEL=facebook/nllb-200-distilled-600M
+USE_LORA=true
+PORT=8080
+```
 
 ## 🎯 Model Details
 

@@ -56,3 +56,4 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+test_base_nllb.py

@@ -1,5 +1,6 @@
 """
-Training script for fine-tuning NLLB-200 on Ibani-English translation.
+Training script for fine-tuning NLLB-200 on English-to-Ibani translation only.
+This is a lighter version that only trains the English → Ibani direction.
 Supports both full fine-tuning and LoRA for efficient training.
 """
 
@@ -29,10 +30,10 @@ def load_training_data(data_path: str) -> List[Dict[str, str]]:
     return data
 
 
-def prepare_dataset(data: List[Dict[str, str]], tokenizer, source_lang: str, target_lang: str):
-    """Prepare dataset for training."""
+def prepare_dataset(data: List[Dict[str, str]], tokenizer, source_lang: str = 'eng', target_lang: str = 'iba'):
+    """Prepare dataset for English → Ibani training only."""
     
-    # Create bidirectional examples (Ibani→English and English→Ibani)
+    # Create unidirectional examples (English → Ibani only)
     examples = []
     
     for item in data:
@@ -54,23 +55,15 @@ def prepare_dataset(data: List[Dict[str, str]], tokenizer, source_lang: str, tar
         if not ibani or not english:
             continue
         
-        # Ibani → English
-        examples.append({
-            'source': ibani,
-            'target': english,
-            'source_lang': 'iba_Latn',  # NLLB language code for Ibani (custom)
-            'target_lang': 'eng_Latn'
-        })
-        
-        # English → Ibani
+        # English → Ibani only
         examples.append({
             'source': english,
             'target': ibani,
             'source_lang': 'eng_Latn',
-            'target_lang': 'iba_Latn'
+            'target_lang': 'iba_Latn'  # NLLB language code for Ibani (custom)
         })
     
-    print(f"✓ Created {len(examples)} bidirectional training examples")
+    print(f"✓ Created {len(examples)} English→Ibani training examples")
     
     # Convert to Hugging Face Dataset
     dataset = Dataset.from_list(examples)
@@ -78,7 +71,7 @@ def prepare_dataset(data: List[Dict[str, str]], tokenizer, source_lang: str, tar
     def preprocess_function(examples):
         """Tokenize the examples."""
         # NLLB uses special tokens for language codes
-        # We'll use a similar language as proxy for Ibani
+
         # or train with eng_Latn and fine-tune
         
         inputs = [ex for ex in examples['source']]
@@ -143,10 +136,10 @@ def train(
     learning_rate: float = 2e-4,
     eval_split: float = 0.1,
 ):
-    """Main training function."""
+    """Main training function for English → Ibani only."""
     
     print("=" * 60)
-    print("🚀 Ibani-English NLLB Training")
+    print("🚀 English→Ibani NLLB Training (Unidirectional)")
     print("=" * 60)
     
     # Create output directory
@@ -169,7 +162,7 @@ def train(
     # Load and prepare data
     print(f"\n📚 Loading training data from: {data_path}")
     data = load_training_data(data_path)
-    dataset = prepare_dataset(data, tokenizer, 'iba', 'eng')
+    dataset = prepare_dataset(data, tokenizer, 'eng', 'iba')
     
     # Split into train/eval
     split_dataset = dataset.train_test_split(test_size=eval_split, seed=42)
@@ -232,12 +225,13 @@ def train(
     # Save training info
     info = {
         "base_model": model_name,
+        "direction": "eng_to_iba",
         "use_lora": use_lora,
         "num_epochs": num_epochs,
         "batch_size": batch_size,
         "learning_rate": learning_rate,
         "num_training_examples": len(data),
-        "num_bidirectional_examples": len(dataset),
+        "num_unidirectional_examples": len(dataset),
     }
     
     with open(f"{output_dir}/training_info.json", 'w') as f:
@@ -249,7 +243,7 @@ def train(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Train NLLB model for Ibani-English translation")
+    parser = argparse.ArgumentParser(description="Train NLLB model for English→Ibani translation only")
     parser.add_argument(
         "--data",
         type=str,
@@ -259,7 +253,7 @@ def main():
     parser.add_argument(
         "--output",
         type=str,
-        default="models/ibani-nllb",
+        default="models/ibani-nllb-eng2iba",
         help="Output directory for trained model"
     )
     parser.add_argument(

@@ -3,6 +3,7 @@ torch>=2.0.0
 transformers>=4.35.0
 sentencepiece>=0.1.99
 protobuf>=3.20.0
+hf_xet>=0.3.0  # Faster HuggingFace model downloads and caching
 
 # API
 fastapi>=0.104.0
